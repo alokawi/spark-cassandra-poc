@@ -38,8 +38,8 @@ public class VideoViewEventDataGenerator {
 
 	}
 
-	private void generate(int numberOfUsers, int numberOfVideos, int numberOfRecords, long timeOrigin, long timeEnd,
-			int viewDurationInterval) {
+	public List<VideoViewEvent> generate(int numberOfUsers, int numberOfVideos, int numberOfRecords, long timeOrigin,
+			long timeEnd, int viewDurationInterval) {
 
 		Random randomUser = new Random();
 		Random randomVideo = new Random();
@@ -61,6 +61,8 @@ public class VideoViewEventDataGenerator {
 			System.out.println(i + " : " + videoViewEvent);
 			videoViewEvents.add(videoViewEvent);
 		}
+
+		return videoViewEvents;
 	}
 
 }

@@ -4,6 +4,7 @@
 package alokawi.poc.cassandra.core;
 
 import java.util.Iterator;
+import java.util.List;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ExecutionInfo;
@@ -13,6 +14,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 
 import alokawi.poc.exception.QueryExecutionException;
+import alokawi.poc.videoview.VideoViewEvent;
 
 /**
  * @author alokkumar
@@ -64,6 +66,15 @@ public class CassandraConnection implements Connection<CassandraDBContext> {
 
 	private Cluster buildConnection() {
 		return Cluster.builder().addContactPoint(node).withPort(port).build();
+	}
+
+	@Override
+	public void insertVideoEvent(VideoViewEvent videoViewEvent) {
+		// CQLSSTableWriter.Builder builder = CQLSSTableWriter.builder();
+	}
+
+	public void insertVideoEvents(List<VideoViewEvent> videoViewEvents) {
+		// CQLSSTableWriter.Builder builder = CQLSSTableWriter.builder();
 	}
 
 }
