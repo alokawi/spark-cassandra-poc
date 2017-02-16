@@ -1,5 +1,5 @@
 /**
- * 
+ 
  */
 package alokawi.poc.cassandra.core;
 
@@ -39,21 +39,22 @@ public class CassandraConnection implements Connection<CassandraDBContext> {
 		try (Cluster cassandraConnection = buildConnection()) {
 
 			final Metadata metadata = cassandraConnection.getMetadata();
-			System.out.printf("Connected to cluster: %s\n", metadata.getClusterName());
+			System.out.printf("Connected to cluster: %s", metadata.getClusterName());
 			for (final Host host : metadata.getAllHosts()) {
-				System.out.printf("Datacenter: %s; Host: %s; Rack: %s\n", host.getDatacenter(), host.getAddress(),
+				System.out.printf("Datacenter: %s; Host: %s; Rack: %s", host.getDatacenter(), host.getAddress(),
 						host.getRack());
 			}
 
-			Session session = cassandraConnection.connect();
+			try (Session session = cassandraConnection.connect()) {
 
-			com.datastax.driver.core.ResultSet resultSet = session.execute(query.getQuery());
-			printResultSet(resultSet);
+				String queryToExecute = query.getQuery();
+				System.out.println(queryToExecute);
+				com.datastax.driver.core.ResultSet resultSet = session.execute(queryToExecute);
+				printResultSet(resultSet);
 
-			ExecutionInfo executionInfo = resultSet.getExecutionInfo();
-			System.out.println(executionInfo);
-
-			session.close();
+				ExecutionInfo executionInfo = resultSet.getExecutionInfo();
+				System.out.println(executionInfo);
+			}
 		}
 		// There isn't any resultset for these use-case
 		return new CassandraResultSet();
@@ -73,11 +74,38 @@ public class CassandraConnection implements Connection<CassandraDBContext> {
 
 	@Override
 	public void insertVideoEvent(VideoViewEvent videoViewEvent) {
-		// CQLSSTableWriter.Builder builder = CQLSSTableWriter.builder();
+		try (Cluster cassandraConnection = buildConnection()) {
+			try (Session session = cassandraConnection.connect()) {
+				String insertQuery = "insert into wootag.video_view (" + "user_id," + "	video_id, " + "	session_id, "
+						+ "	event_start_timestamp, " + "	view_duration_in_second) VALUES (" + "'"
+						+ videoViewEvent.getUserId() + "'" + "," + "'" + videoViewEvent.getVideoId() + "'" + "," + "'"
+						+ videoViewEvent.getSessionId() + "'" + "," + videoViewEvent.getEventStartTimestamp() + ","
+						+ videoViewEvent.getViewDurationInSeconds() + ")";
+
+				System.out.println(insertQuery);
+				session.execute(insertQuery);
+			}
+		}
 	}
 
+	@Override
 	public void insertVideoEvents(List<VideoViewEvent> videoViewEvents) {
-		// CQLSSTableWriter.Builder builder = CQLSSTableWriter.builder();
+		try (Cluster cassandraConnection = buildConnection()) {
+			try (Session session = cassandraConnection.connect()) {
+				String q = "BEGIN BATCH \n";
+
+				for (VideoViewEvent videoViewEvent : videoViewEvents) {
+					String insertQuery = "insert into wootag.video_view (" + "user_id," + "	video_id, "
+							+ "	session_id, " + "	event_start_timestamp, " + "	view_duration_in_second) VALUES ";
+					insertQuery += "\n (" + "'" + videoViewEvent.getUserId() + "'" + "," + "'"
+							+ videoViewEvent.getVideoId() + "'" + "," + "'" + videoViewEvent.getSessionId() + "'" + ","
+							+ videoViewEvent.getEventStartTimestamp() + "," + videoViewEvent.getViewDurationInSeconds()
+							+ ");\n";
+					q += insertQuery;
+				}
+				session.execute(q + " APPLY BATCH; ");
+			}
+		}
 	}
 
 }
