@@ -29,6 +29,19 @@ dependencies {
     // https://mvnrepository.com/artifact/org.apache.flume/flume-ng-core
     compile group: 'org.apache.flume', name: 'flume-ng-core', version: '1.7.0'
 
+    // https://mvnrepository.com/artifact/org.apache.spark/spark-core_2.10
+    compile group: 'org.apache.spark', name: 'spark-core_2.10', version: '2.1.0'
+    
+    // https://mvnrepository.com/artifact/org.apache.spark/spark-sql_2.10
+    compile group: 'org.apache.spark', name: 'spark-sql_2.10', version: '2.1.0'
+    
+    // https://mvnrepository.com/artifact/com.datastax.spark/spark-cassandra-connector_2.10
+    compile group: 'com.datastax.spark', name: 'spark-cassandra-connector_2.10', version: '2.0.0-M3'
+    
+    compile 'com.datastax.spark:spark-cassandra-connector-java_2.10:1.1.1'
+    
+    
+
     compile (
             'com.google.guava:guava:17.0'
     )
