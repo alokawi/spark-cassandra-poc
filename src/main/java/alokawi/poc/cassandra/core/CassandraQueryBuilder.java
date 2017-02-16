@@ -3,13 +3,15 @@
  */
 package alokawi.poc.cassandra.core;
 
+import alokawi.poc.core.Query;
+import alokawi.poc.core.QueryBuilder;
 import alokawi.poc.exception.QueryBuilderException;
 
 /**
  * @author alokkumar
  *
  */
-public class DWQueryBuilder implements QueryBuilder<CassandraDBContext> {
+public class CassandraQueryBuilder implements QueryBuilder<CassandraDBContext> {
 
 	private static final String SPACE = " ";
 

@@ -1,15 +1,15 @@
 /**
  * 
  */
-package alokawi.poc.cassandra.demo;
+package alokawi.test.videoview;
 
 import java.util.List;
 
 import alokawi.poc.cassandra.core.CassandraConnection;
 import alokawi.poc.cassandra.core.CassandraDBContext;
-import alokawi.poc.cassandra.core.Connection;
+import alokawi.poc.core.Connection;
 import alokawi.poc.exception.QueryExecutionException;
-import alokawi.poc.flume.example.FlumeDataWriter;
+import alokawi.poc.flume.core.FlumeDataWriter;
 import alokawi.poc.videoview.VideoViewEvent;
 import alokawi.poc.videoview.VideoViewEventDataGenerator;
 

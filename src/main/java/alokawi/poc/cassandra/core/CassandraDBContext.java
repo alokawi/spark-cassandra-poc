@@ -3,6 +3,8 @@
  */
 package alokawi.poc.cassandra.core;
 
+import alokawi.poc.core.DBContext;
+
 /**
  * @author alokkumar
  *
@@ -10,8 +12,6 @@ package alokawi.poc.cassandra.core;
 public class CassandraDBContext extends DBContext {
 
 	private String tableName;
-	private String incrementalColumnName;
-	private String incrementalColumnLastLoadedValue;
 
 	public CassandraDBContext() {
 		super();
@@ -23,22 +23,6 @@ public class CassandraDBContext extends DBContext {
 
 	public void setTableName(String tableName) {
 		this.tableName = tableName;
-	}
-
-	public String getIncrementalColumnName() {
-		return incrementalColumnName;
-	}
-
-	public void setIncrementalColumnName(String incrementalColumnName) {
-		this.incrementalColumnName = incrementalColumnName;
-	}
-
-	public String getIncrementalColumnLastLoadedValue() {
-		return incrementalColumnLastLoadedValue;
-	}
-
-	public void setIncrementalColumnLastLoadedValue(String incrementalColumnLastLoadedValue) {
-		this.incrementalColumnLastLoadedValue = incrementalColumnLastLoadedValue;
 	}
 
 }

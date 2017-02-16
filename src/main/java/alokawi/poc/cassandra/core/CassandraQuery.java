@@ -3,6 +3,8 @@
  */
 package alokawi.poc.cassandra.core;
 
+import alokawi.poc.core.Query;
+
 /**
  * @author alokkumar
  *
