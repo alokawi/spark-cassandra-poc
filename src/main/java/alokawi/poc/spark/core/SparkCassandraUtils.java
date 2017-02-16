@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
@@ -47,8 +48,13 @@ public class SparkCassandraUtils {
 
 		Dataset<Row> dataset = sqlContext.read().format("org.apache.spark.sql.cassandra").options(options).load()
 				.cache();
-		
+
 		dataset.show(10);
+
+		dataset.registerTempTable("temptable");
+		String query = "select * from temptable where view_duration_in_second = 20";
+		
+		sqlContext.sql(query).show();
 
 		System.out.println(sqlContext);
 
