@@ -4,9 +4,10 @@
 package alokawi.poc.videoview;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author alokkumar
@@ -19,30 +20,43 @@ public class VideoViewEventDataGenerator {
 	 */
 	public static void main(String[] args) {
 
-		int numberOfRecords = 10000;
+		int numberOfUsers = 1000;
+		int numberOfVideos = 100;
+
+		int numberOfRecords = 100000;
+
+		// timeRange = 1Feb to 15Feb
+		long timeOrigin = 1485907200000L;
+		long timeEnd = 1487226374000L;
+
+		// interval k = 5 here
+		int viewDurationInterval = 5;
 
 		VideoViewEventDataGenerator eventDataGenerator = new VideoViewEventDataGenerator();
-		eventDataGenerator.generate(numberOfRecords);
+		eventDataGenerator.generate(numberOfUsers, numberOfVideos, numberOfRecords, timeOrigin, timeEnd,
+				viewDurationInterval);
 
 	}
 
-	private void generate(int numberOfRecords) {
+	private void generate(int numberOfUsers, int numberOfVideos, int numberOfRecords, long timeOrigin, long timeEnd,
+			int viewDurationInterval) {
 
-		Date date = new Date(1485907200000L);
+		Random randomUser = new Random();
+		Random randomVideo = new Random();
 
 		List<VideoViewEvent> videoViewEvents = new ArrayList<>();
 		for (int i = 0; i < numberOfRecords; i++) {
 			VideoViewEvent videoViewEvent = new VideoViewEvent();
 
-			videoViewEvent.setUserId("u-" + UUID.randomUUID().toString());
-			videoViewEvent.setVideoId("v-" + UUID.randomUUID().toString());
+			videoViewEvent.setUserId("u-" + randomUser.nextInt(numberOfUsers));
+			videoViewEvent.setVideoId("v-" + randomVideo.nextInt(numberOfVideos));
 			videoViewEvent.setSessionId("s-" + UUID.randomUUID().toString());
 
-			// Randomly increase and set time
-			videoViewEvent.setEventStartTimestamp(date.getTime() + ((i + 1) * (i + 1) * (i + 1)));
+			// Randomly get time from 1Feb to 15Feb duration
+			videoViewEvent.setEventStartTimestamp(ThreadLocalRandom.current().nextLong(timeOrigin, timeEnd));
 
 			// Get duration in seconds from 5 to 45 seconds
-			videoViewEvent.setViewDurationInSeconds(5 * (i % 9) + 5);
+			videoViewEvent.setViewDurationInSeconds(viewDurationInterval * ThreadLocalRandom.current().nextInt(1, 9));
 
 			System.out.println(i + " : " + videoViewEvent);
 			videoViewEvents.add(videoViewEvent);
