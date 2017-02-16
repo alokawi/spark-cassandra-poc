@@ -13,6 +13,9 @@ import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 
+import alokawi.poc.core.Connection;
+import alokawi.poc.core.Query;
+import alokawi.poc.core.ResultSet;
 import alokawi.poc.exception.QueryExecutionException;
 import alokawi.poc.videoview.VideoViewEvent;
 

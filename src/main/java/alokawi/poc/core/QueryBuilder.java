@@ -1,7 +1,7 @@
 /**
  * 
  */
-package alokawi.poc.cassandra.core;
+package alokawi.poc.core;
 
 import alokawi.poc.exception.QueryBuilderException;
 

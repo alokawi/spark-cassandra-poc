@@ -5,4 +5,4 @@
  * @author alokkumar
  *
  */
-package alokawi.poc.flume.example;
+package alokawi.poc.flume.core;
