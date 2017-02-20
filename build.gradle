@@ -40,7 +40,8 @@ dependencies {
     
     compile 'com.datastax.spark:spark-cassandra-connector-java_2.10:1.1.1'
     
-    
+    // https://mvnrepository.com/artifact/org.apache.kafka/kafka_2.10
+    compile group: 'org.apache.kafka', name: 'kafka_2.10', version: '0.10.1.1'
 
     compile (
             'com.google.guava:guava:17.0'
