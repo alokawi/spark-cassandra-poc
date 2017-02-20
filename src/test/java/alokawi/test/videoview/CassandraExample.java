@@ -5,6 +5,8 @@ package alokawi.test.videoview;
 
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import alokawi.poc.cassandra.core.CassandraConnection;
 import alokawi.poc.cassandra.core.CassandraDBContext;
 import alokawi.poc.cassandra.core.CassandraQuery;
@@ -19,6 +21,8 @@ import alokawi.poc.videoview.VideoViewEventDataGenerator;
  *
  */
 public class CassandraExample {
+
+	Logger logger = Logger.getLogger(getClass());
 
 	/**
 	 * @param args
@@ -47,9 +51,6 @@ public class CassandraExample {
 		List<VideoViewEvent> videoViewEvents = eventDataGenerator.generate(numberOfUsers, numberOfVideos,
 				numberOfRecords, timeOrigin, timeEnd, viewDurationInterval);
 
-		// Push data to Flume
-		pushtoFlume(videoViewEvents);
-
 		// or Push directly to Cassandra
 		Connection<CassandraDBContext> connection = new CassandraConnection(node, port);
 		connection.execute(new CassandraQuery("CREATE KEYSPACE IF NOT EXISTS wootag WITH replication"
@@ -59,19 +60,10 @@ public class CassandraExample {
 				+ " video_id text, \n" + " session_id text, \n" + " event_start_timestamp bigint, \n"
 				+ " view_duration_in_second int, PRIMARY KEY ( user_id, video_id, session_id )" + ");"));
 
+		logger.info("Starting data insert to table");
 		connection.insertVideoEvents(videoViewEvents);
+		logger.info("Data insert complete");
 
-	}
-
-	private void pushtoFlume(List<VideoViewEvent> generateData) {
-		// FlumeDataWriter flumeDataWriter = new FlumeDataWriter();
-		//
-		// for (VideoViewEvent videoViewEvent : generateData) {
-		// System.out.println(videoViewEvent);
-		//
-		// flumeDataWriter.sendDataToFlume(videoViewEvent);
-		//
-		// }
 	}
 
 }

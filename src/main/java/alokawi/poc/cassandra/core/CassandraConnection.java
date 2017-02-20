@@ -12,6 +12,7 @@ import com.datastax.driver.core.Host;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.google.common.collect.Lists;
 
 import alokawi.poc.core.Connection;
 import alokawi.poc.core.Query;
@@ -27,6 +28,7 @@ public class CassandraConnection implements Connection<CassandraDBContext> {
 
 	private String node;
 	private int port;
+	private int batchSize = 500;
 
 	public CassandraConnection(String node, int port) {
 		super();
@@ -92,18 +94,27 @@ public class CassandraConnection implements Connection<CassandraDBContext> {
 	public void insertVideoEvents(List<VideoViewEvent> videoViewEvents) {
 		try (Cluster cassandraConnection = buildConnection()) {
 			try (Session session = cassandraConnection.connect()) {
-				String q = "BEGIN BATCH \n";
 
-				for (VideoViewEvent videoViewEvent : videoViewEvents) {
-					String insertQuery = "insert into wootag.video_view (" + "user_id," + "	video_id, "
-							+ "	session_id, " + "	event_start_timestamp, " + "	view_duration_in_second) VALUES ";
-					insertQuery += "\n (" + "'" + videoViewEvent.getUserId() + "'" + "," + "'"
-							+ videoViewEvent.getVideoId() + "'" + "," + "'" + videoViewEvent.getSessionId() + "'" + ","
-							+ videoViewEvent.getEventStartTimestamp() + "," + videoViewEvent.getViewDurationInSeconds()
-							+ ");\n";
-					q += insertQuery;
+				List<List<VideoViewEvent>> partition = Lists.partition(videoViewEvents, batchSize);
+				int total = 0;
+				for (List<VideoViewEvent> list : partition) {
+
+					String q = "BEGIN BATCH \n";
+
+					for (VideoViewEvent videoViewEvent : list) {
+						String insertQuery = "insert into wootag.video_view (" + "user_id," + "	video_id, "
+								+ "	session_id, " + "	event_start_timestamp, "
+								+ "	view_duration_in_second) VALUES ";
+						insertQuery += "\n (" + "'" + videoViewEvent.getUserId() + "'" + "," + "'"
+								+ videoViewEvent.getVideoId() + "'" + "," + "'" + videoViewEvent.getSessionId() + "'"
+								+ "," + videoViewEvent.getEventStartTimestamp() + ","
+								+ videoViewEvent.getViewDurationInSeconds() + ");\n";
+						q += insertQuery;
+					}
+					session.execute(q + " APPLY BATCH; ");
+					total += batchSize;
+					System.out.println("Executing batch of " + batchSize + ", Total : " + total);
 				}
-				session.execute(q + " APPLY BATCH; ");
 			}
 		}
 	}

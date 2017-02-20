@@ -28,6 +28,7 @@ public class SparkCassandraUtils {
 		cassandraUtils.execute();
 	}
 
+	@SuppressWarnings("deprecation")
 	private void execute() {
 		SparkConf conf = new SparkConf();
 		conf.setAppName("cassandra-spark-poc");
@@ -49,11 +50,11 @@ public class SparkCassandraUtils {
 		Dataset<Row> dataset = sqlContext.read().format("org.apache.spark.sql.cassandra").options(options).load()
 				.cache();
 
-		dataset.show(10);
-
 		dataset.registerTempTable("temptable");
-		String query = "select * from temptable where view_duration_in_second = 20";
-		
+		dataset.filter(new Column("view_duration_in_second").equalTo("15")).show();
+
+		String query = "select * from temptable where video_id = 'v-44'";
+
 		sqlContext.sql(query).show();
 
 		System.out.println(sqlContext);
