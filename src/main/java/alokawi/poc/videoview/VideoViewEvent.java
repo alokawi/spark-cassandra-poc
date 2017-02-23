@@ -3,13 +3,14 @@
  */
 package alokawi.poc.videoview;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * @author alokkumar
  *
  */
-public class VideoViewEvent {
+public class VideoViewEvent implements Serializable {
 
 	/*- Event(
 		 * user_id, 
@@ -19,6 +20,24 @@ public class VideoViewEvent {
 		 * view_duration_in_second
 	 * )
 	*/
+
+	public VideoViewEvent(String userId, String videoId, String sessionId, long eventStartTimestamp,
+			long viewDurationInSeconds) {
+		super();
+		this.userId = userId;
+		this.videoId = videoId;
+		this.sessionId = sessionId;
+		this.eventStartTimestamp = eventStartTimestamp;
+		this.viewDurationInSeconds = viewDurationInSeconds;
+	}
+
+	public VideoViewEvent() {
+	}
+
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
 
 	private String userId;
 	private String videoId;
@@ -69,10 +88,8 @@ public class VideoViewEvent {
 	@Override
 	public String toString() {
 		return "VideoViewEvent [userId=" + userId + ", videoId=" + videoId + ", sessionId=" + sessionId
-				+ ", eventStartTimestamp=" + eventStartTimestamp 
-				+ ", eventStartTimestampAsDate=" + new Date(eventStartTimestamp)
-				+ ", viewDurationInSeconds=" + viewDurationInSeconds
-				+ "]";
+				+ ", eventStartTimestamp=" + eventStartTimestamp + ", eventStartTimestampAsDate="
+				+ new Date(eventStartTimestamp) + ", viewDurationInSeconds=" + viewDurationInSeconds + "]";
 	}
 
 }
