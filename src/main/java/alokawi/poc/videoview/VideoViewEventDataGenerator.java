@@ -56,7 +56,7 @@ public class VideoViewEventDataGenerator {
 			videoViewEvent.setEventStartTimestamp(ThreadLocalRandom.current().nextLong(timeOrigin, timeEnd));
 
 			// Get duration in seconds from 5 to 45 seconds
-			videoViewEvent.setViewDurationInSeconds(viewDurationInterval * ThreadLocalRandom.current().nextInt(1, 9));
+			videoViewEvent.setViewDurationInSeconds(viewDurationInterval * ThreadLocalRandom.current().nextInt(1, 10));
 
 			System.out.println(i + " : " + videoViewEvent);
 			videoViewEvents.add(videoViewEvent);
