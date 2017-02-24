@@ -12,6 +12,10 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.SparkSession;
 
 import com.google.gson.Gson;
 
@@ -38,7 +42,7 @@ public class SparkFileLoaderUtils implements Serializable {
 		int numberOfUsers = 1000;
 		int numberOfVideos = 100;
 
-		int numberOfRecords = 3000;
+		int numberOfRecords = 30000;
 
 		// timeRange = 1Feb to 15Feb
 		long timeOrigin = 1485907200000L;
@@ -69,25 +73,30 @@ public class SparkFileLoaderUtils implements Serializable {
 
 		SparkContext sparkContext = new SparkContext(conf);
 
-		JavaRDD<String> javaRDD = sparkContext.textFile(localFilePath, 2).toJavaRDD();
+		JavaRDD<VideoViewEvent> videoEventRDD = sparkContext.textFile(localFilePath, 2).toJavaRDD()
+				.map(new Function<String, VideoViewEvent>() {
+					private static final long serialVersionUID = 1L;
 
-		javaRDD.filter(new Function<String, Boolean>() {
-			private static final long serialVersionUID = 1L;
+					@Override
+					public VideoViewEvent call(String line) throws Exception {
+						return new Gson().fromJson(line, VideoViewEvent.class);
+					}
+				});
 
-			@Override
-			public Boolean call(String v1) throws Exception {
-				return new Gson().fromJson(v1, VideoViewEvent.class).getVideoId().equals(v1);
-			}
-		}).groupBy(new Function<String, VideoViewEvent>() {
-			private static final long serialVersionUID = 1L;
+		SparkSession sparkSession = SparkSession.builder().getOrCreate();
+		SQLContext sqlContext = new SQLContext(sparkSession);
 
-			@Override
-			public VideoViewEvent call(String v1) throws Exception {
-				return new Gson().fromJson(v1, VideoViewEvent.class);
-			}
-		}).saveAsTextFile("/tmp/video_view_event.result");
+		Dataset<Row> videoEventDF = sqlContext.createDataFrame(videoEventRDD, VideoViewEvent.class);
 
-		System.out.println(javaRDD);
+		videoEventDF.createOrReplaceTempView("videoEventTempView");
+
+		String query = "select videoId, viewDurationInSeconds, count(*) from videoEventTempView group by 1, 2";
+
+		List<Row> collectAsList = sqlContext.sql(query).collectAsList();
+		for (Row row : collectAsList) {
+			System.out.println(row.get(0) + "," + row.get(1) + "," + row.get(2));
+		}
+
 	}
 
 }
