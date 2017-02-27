@@ -4,10 +4,14 @@
 package alokawi.poc.videoview;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+
+import alokawi.poc.utils.WeightedRandom;
 
 /**
  * @author alokkumar
@@ -23,7 +27,7 @@ public class VideoViewEventDataGenerator {
 		int numberOfUsers = 1000;
 		int numberOfVideos = 100;
 
-		int numberOfRecords = 100000;
+		int numberOfRecords = 1000;
 
 		// timeRange = 1Feb to 15Feb
 		long timeOrigin = 1485907200000L;
@@ -45,6 +49,11 @@ public class VideoViewEventDataGenerator {
 		Random randomVideo = new Random();
 
 		List<VideoViewEvent> videoViewEvents = new ArrayList<>();
+
+		Map<Integer, Double> weightedMap = prepareDefaultWeightedMap();
+
+		WeightedRandom<Integer> weightedRandom = new WeightedRandom<>(weightedMap, 100);
+
 		for (int i = 0; i < numberOfRecords; i++) {
 			VideoViewEvent videoViewEvent = new VideoViewEvent();
 
@@ -56,13 +65,27 @@ public class VideoViewEventDataGenerator {
 			videoViewEvent.setEventStartTimestamp(ThreadLocalRandom.current().nextLong(timeOrigin, timeEnd));
 
 			// Get duration in seconds from 5 to 45 seconds
-			videoViewEvent.setViewDurationInSeconds(viewDurationInterval * ThreadLocalRandom.current().nextInt(1, 10));
+			videoViewEvent.setViewDurationInSeconds(viewDurationInterval * weightedRandom.next());
 
 			System.out.println(i + " : " + videoViewEvent);
 			videoViewEvents.add(videoViewEvent);
 		}
 
 		return videoViewEvents;
+	}
+
+	private Map<Integer, Double> prepareDefaultWeightedMap() {
+		Map<Integer, Double> weightedMap = new HashMap<Integer, Double>();
+		weightedMap.put(1, 0.7);
+		weightedMap.put(2, 0.6);
+		weightedMap.put(3, 0.5);
+		weightedMap.put(4, 0.45);
+		weightedMap.put(5, 0.4);
+		weightedMap.put(6, 0.35);
+		weightedMap.put(7, 0.3);
+		weightedMap.put(8, 0.2);
+		weightedMap.put(9, 0.1);
+		return weightedMap;
 	}
 
 }
