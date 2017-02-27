@@ -73,6 +73,33 @@ public class SparkFileLoaderUtils implements Serializable {
 
 		SparkContext sparkContext = new SparkContext(conf);
 
+		JavaRDD<VideoViewEvent> videoEventRDD = prepareVideoRDD(localFilePath, sparkContext);
+
+		SparkSession sparkSession = SparkSession.builder().getOrCreate();
+		SQLContext sqlContext = new SQLContext(sparkSession);
+
+		Dataset<Row> videoEventDF = sqlContext.createDataFrame(videoEventRDD, VideoViewEvent.class);
+
+		videoEventDF.createOrReplaceTempView("videoEventTempView");
+
+		String query = "select videoId, viewDurationInSeconds, count(*) as view_counts from videoEventTempView group by 1, 2";
+
+		List<Row> collectAsList = sqlContext.sql(query).collectAsList();
+		for (Row row : collectAsList) {
+			System.out.println(row.get(0) + "," + row.get(1) + "," + row.get(2));
+		}
+
+		System.out.println("Output size : " + collectAsList.size());
+
+		saveAsParquetFiles(sqlContext, query);
+
+	}
+
+	private void saveAsParquetFiles(SQLContext sqlContext, String query) {
+		sqlContext.sql(query).write().format("parquet").save("video_event_drop_off_table.parquet");
+	}
+
+	private JavaRDD<VideoViewEvent> prepareVideoRDD(String localFilePath, SparkContext sparkContext) {
 		JavaRDD<VideoViewEvent> videoEventRDD = sparkContext.textFile(localFilePath, 2).toJavaRDD()
 				.map(new Function<String, VideoViewEvent>() {
 					private static final long serialVersionUID = 1L;
@@ -82,21 +109,7 @@ public class SparkFileLoaderUtils implements Serializable {
 						return new Gson().fromJson(line, VideoViewEvent.class);
 					}
 				});
-
-		SparkSession sparkSession = SparkSession.builder().getOrCreate();
-		SQLContext sqlContext = new SQLContext(sparkSession);
-
-		Dataset<Row> videoEventDF = sqlContext.createDataFrame(videoEventRDD, VideoViewEvent.class);
-
-		videoEventDF.createOrReplaceTempView("videoEventTempView");
-
-		String query = "select videoId, viewDurationInSeconds, count(*) from videoEventTempView group by 1, 2";
-
-		List<Row> collectAsList = sqlContext.sql(query).collectAsList();
-		for (Row row : collectAsList) {
-			System.out.println(row.get(0) + "," + row.get(1) + "," + row.get(2));
-		}
-
+		return videoEventRDD;
 	}
 
 }
