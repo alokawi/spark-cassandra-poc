@@ -146,7 +146,7 @@ public class SparkFileLoaderUtils implements Serializable {
 				+ " PRIMARY KEY ( video_id, view_duration_in_second )" + ");"));
 
 		connection.insertRows(collectAsList, tableName,
-				Arrays.asList("video	_id", "view_duration_in_second", "view_counts"));
+				Arrays.asList("video_id", "view_duration_in_second", "view_counts"));
 		System.out.println("Output size : " + collectAsList.size());
 	}
 
