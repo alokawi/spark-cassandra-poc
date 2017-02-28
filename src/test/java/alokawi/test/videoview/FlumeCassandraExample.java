@@ -1,7 +1,7 @@
 /**
  * 
  */
-package alokawi.poc.cassandra.example;
+package alokawi.test.videoview;
 
 import java.util.List;
 
@@ -17,14 +17,14 @@ import alokawi.poc.videoview.VideoViewEventDataGenerator;
  * @author alokkumar
  *
  */
-public class CassandraExample {
+public class FlumeCassandraExample {
 
 	/**
 	 * @param args
 	 * @throws QueryExecutionException
 	 */
 	public static void main(String[] args) throws QueryExecutionException {
-		CassandraExample cassandraExample = new CassandraExample();
+		FlumeCassandraExample cassandraExample = new FlumeCassandraExample();
 		cassandraExample.loadDataToCassandra("localhost", 9042);
 	}
 

@@ -5,6 +5,7 @@ package alokawi.poc.cassandra.core;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ExecutionInfo;
@@ -117,6 +118,35 @@ public class CassandraConnection implements Connection<CassandraDBContext> {
 				}
 			}
 		}
+	}
+
+	@Override
+	public void insertRows(List<org.apache.spark.sql.Row> collectAsList, String tableName,
+			Map<String, String> columnMeta) throws QueryExecutionException {
+
+		try (Cluster cassandraConnection = buildConnection()) {
+			try (Session session = cassandraConnection.connect()) {
+
+				List<List<org.apache.spark.sql.Row>> partition = Lists.partition(collectAsList, batchSize);
+				int total = 0;
+				for (List<org.apache.spark.sql.Row> list : partition) {
+
+					String q = "BEGIN BATCH \n";
+
+					for (org.apache.spark.sql.Row row : list) {
+						String insertQuery = "insert into wootag." + tableName + " ("
+								+ "video_id, view_duration_in_second, view_counts) VALUES ";
+						insertQuery += "\n (" + "'" + row.getString(0) + "'" + "," + row.getLong(1) + ","
+								+ row.getLong(2) + ");\n";
+						q += insertQuery;
+					}
+					session.execute(q + " APPLY BATCH; ");
+					total += batchSize;
+					System.out.println("Executing batch of " + batchSize + ", Total : " + total);
+				}
+			}
+		}
+
 	}
 
 }
