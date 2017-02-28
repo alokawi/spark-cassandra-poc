@@ -6,7 +6,7 @@ package alokawi.poc.spark.fileloader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.spark.SparkConf;
@@ -58,17 +58,18 @@ public class SparkFileLoaderUtils implements Serializable {
 		// interval k = 5 here
 		int viewDurationInterval = 5;
 
-		List<VideoViewEvent> videoViewEvents = populateVideoViewEvents(numberOfUsers, numberOfVideos, numberOfRecords,
-				timeOrigin, timeEnd, viewDurationInterval);
+		SparkFileLoaderUtils sparkFileLoaderUtils = new SparkFileLoaderUtils();
+
+		List<VideoViewEvent> videoViewEvents = sparkFileLoaderUtils.populateVideoViewEvents(numberOfUsers,
+				numberOfVideos, numberOfRecords, timeOrigin, timeEnd, viewDurationInterval);
 
 		String localFilePath = "/tmp/video_view_event.json";
-		writeVideoViewEventsToFile(videoViewEvents, localFilePath);
+		sparkFileLoaderUtils.writeVideoViewEventsToFile(videoViewEvents, localFilePath);
 
-		SparkFileLoaderUtils cassandraUtils = new SparkFileLoaderUtils();
-		cassandraUtils.execute(localFilePath);
+		sparkFileLoaderUtils.prepareRDDAndWriteToCassandra(localFilePath);
 	}
 
-	private static void writeVideoViewEventsToFile(List<VideoViewEvent> videoViewEvents, String localFilePath)
+	private void writeVideoViewEventsToFile(List<VideoViewEvent> videoViewEvents, String localFilePath)
 			throws IOException {
 		try (FileWriter fileWriter = new FileWriter(localFilePath)) {
 			for (VideoViewEvent videoViewEvent : videoViewEvents) {
@@ -77,15 +78,15 @@ public class SparkFileLoaderUtils implements Serializable {
 		}
 	}
 
-	private static List<VideoViewEvent> populateVideoViewEvents(int numberOfUsers, int numberOfVideos,
-			int numberOfRecords, long timeOrigin, long timeEnd, int viewDurationInterval) {
+	private List<VideoViewEvent> populateVideoViewEvents(int numberOfUsers, int numberOfVideos, int numberOfRecords,
+			long timeOrigin, long timeEnd, int viewDurationInterval) {
 		VideoViewEventDataGenerator eventDataGenerator = new VideoViewEventDataGenerator();
 		List<VideoViewEvent> videoViewEvents = eventDataGenerator.generate(numberOfUsers, numberOfVideos,
 				numberOfRecords, timeOrigin, timeEnd, viewDurationInterval);
 		return videoViewEvents;
 	}
 
-	private void execute(String localFilePath) throws QueryExecutionException {
+	private void prepareRDDAndWriteToCassandra(String localFilePath) throws QueryExecutionException {
 		SparkConf conf = new SparkConf();
 		conf.setAppName("file-loader-poc");
 		conf.setMaster("local[*]");
@@ -101,29 +102,59 @@ public class SparkFileLoaderUtils implements Serializable {
 
 		videoEventDF.createOrReplaceTempView("videoEventTempView");
 
-		String query = "select videoId, viewDurationInSeconds, count(*) as view_counts from videoEventTempView group by 1, 2";
+		String videoViewCountQuery = "select userId, viewDurationInSeconds, count(*) as view_counts from videoEventTempView group by 1, 2";
 
-		List<Row> collectAsList = sqlContext.sql(query).collectAsList();
-		for (Row row : collectAsList) {
-			System.out.println(row.get(0) + "," + row.get(1) + "," + row.get(2));
-		}
+		List<Row> collectAsList = sqlContext.sql(videoViewCountQuery).collectAsList();
+		// printRows(collectAsList);
 
 		// Push directly to Cassandra
+		String tableName = "video_view_count";
 		Connection<CassandraDBContext> connection = new CassandraConnection("localhost", 9042);
+		writeVideoViewCountResultToCassandra(collectAsList, connection, tableName);
+
+		tableName = "user_view_count";
+		String userViewCountQuery = "select userId, viewDurationInSeconds, count(*) as view_counts from videoEventTempView group by 1, 2";
+
+		collectAsList = sqlContext.sql(userViewCountQuery).collectAsList();
+
+		writeUserViewCountResultToCassandra(collectAsList, tableName, connection);
+
+		saveAsParquetFiles(sqlContext, videoViewCountQuery);
+
+	}
+
+	private void writeUserViewCountResultToCassandra(List<Row> collectAsList, String tableName,
+			Connection<CassandraDBContext> connection) throws QueryExecutionException {
+		connection.execute(new CassandraQuery("DROP table if exists wootag." + tableName + ";"));
+		connection.execute(new CassandraQuery("create table IF NOT EXISTS wootag." + tableName + " ("
+				+ " user_id text, view_duration_in_second int, view_counts int,"
+				+ " PRIMARY KEY ( user_id, view_duration_in_second )" + ");"));
+
+		connection.insertRows(collectAsList, tableName,
+				Arrays.asList("user_id", "view_duration_in_second", "view_counts"));
+		System.out.println("Output size : " + collectAsList.size());
+	}
+
+	private void writeVideoViewCountResultToCassandra(List<Row> collectAsList,
+			Connection<CassandraDBContext> connection, String tableName) throws QueryExecutionException {
 		connection.execute(new CassandraQuery("CREATE KEYSPACE IF NOT EXISTS wootag WITH replication"
 				+ " = {'class': 'SimpleStrategy'," + " 'replication_factor': '1'}  AND durable_writes " + "= true;"));
 
-		String tableName = "video_view_count";
+		connection.execute(new CassandraQuery("DROP table if exists wootag." + tableName + ";"));
 		connection.execute(new CassandraQuery("create table IF NOT EXISTS wootag." + tableName + " ("
 				+ " video_id text, view_duration_in_second int, view_counts int,"
 				+ " PRIMARY KEY ( video_id, view_duration_in_second )" + ");"));
 
-		connection.insertRows(collectAsList, tableName, new HashMap<>());
-
+		connection.insertRows(collectAsList, tableName,
+				Arrays.asList("video	_id", "view_duration_in_second", "view_counts"));
 		System.out.println("Output size : " + collectAsList.size());
+	}
 
-		saveAsParquetFiles(sqlContext, query);
-
+	@SuppressWarnings("unused")
+	private void printRows(List<Row> collectAsList) {
+		for (Row row : collectAsList) {
+			System.out.println(row.get(0) + "," + row.get(1) + "," + row.get(2));
+		}
 	}
 
 	private void saveAsParquetFiles(SQLContext sqlContext, String query) {

@@ -4,7 +4,6 @@
 package alokawi.poc.core;
 
 import java.util.List;
-import java.util.Map;
 
 import org.apache.spark.sql.Row;
 
@@ -23,7 +22,7 @@ public interface Connection<C> {
 
 	public void insertVideoEvents(List<VideoViewEvent> videoViewEvents) throws QueryExecutionException;
 
-	public void insertRows(List<Row> collectAsList, String tableName, Map<String, String> columnMeta)
+	public void insertRows(List<Row> collectAsList, String tableName, List<String> columns)
 			throws QueryExecutionException;
 
 }
