@@ -102,7 +102,8 @@ public class SparkFileLoaderUtils implements Serializable {
 
 		videoEventDF.createOrReplaceTempView("videoEventTempView");
 
-		String videoViewCountQuery = "select userId, viewDurationInSeconds, count(*) as view_counts from videoEventTempView group by 1, 2";
+		String videoViewCountQuery = "select videoId, viewDurationInSeconds, count(*)"
+				+ " as view_counts from videoEventTempView group by 1, 2";
 
 		List<Row> collectAsList = sqlContext.sql(videoViewCountQuery).collectAsList();
 		// printRows(collectAsList);
@@ -113,7 +114,8 @@ public class SparkFileLoaderUtils implements Serializable {
 		writeVideoViewCountResultToCassandra(collectAsList, connection, tableName);
 
 		tableName = "user_view_count";
-		String userViewCountQuery = "select userId, viewDurationInSeconds, count(*) as view_counts from videoEventTempView group by 1, 2";
+		String userViewCountQuery = "select userId, viewDurationInSeconds, count(*) as"
+				+ " view_counts from videoEventTempView group by 1, 2";
 
 		collectAsList = sqlContext.sql(userViewCountQuery).collectAsList();
 
